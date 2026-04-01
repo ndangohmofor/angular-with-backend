@@ -68,6 +68,24 @@ export class PlacesService {
     if (prevPlaces.some((p) => p.id === place.id)) {
       this.userPlaces.set(prevPlaces.filter((p) => p.id !== place.id));
     }
+
+    return this.httpClient
+      .delete(`http://localhost:3000/user-places/${place.id}`)
+      .pipe(
+        catchError((error) => {
+          this.userPlaces.set(prevPlaces);
+          this.errorService.showError(
+            'Something went wrong while removing from your favorite places',
+          );
+          //Rollback the changes to the userPlaces signal
+          return throwError(
+            () =>
+              new Error(
+                'Something went wrong while removing from your favorite places',
+              ),
+          );
+        }),
+      );
   }
 
   private fetchPlaces(url: string, errorMessage: string) {
