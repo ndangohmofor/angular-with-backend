@@ -33,10 +33,25 @@ export class PlacesService {
   }
 
   addPlaceToUserPlaces(place: Place) {
-    this.userPlaces.update((prevPlaces) => [...prevPlaces, place]);
-    return this.httpClient.put('http://localhost:3000/user-places', {
-      placeId: place.id,
-    });
+    const prevPlaces = this.userPlaces();
+    this.userPlaces.set([...prevPlaces, place]);
+    return this.httpClient
+      .put('http://localhost:3000/user-places', {
+        placeId: place.id,
+      })
+      .pipe(
+        catchError((error) => {
+          console.log(error);
+          //Rollback the changes to the userPlaces signal
+          this.userPlaces.set(prevPlaces);
+          return throwError(
+            () =>
+              new Error(
+                'Something went wrong while saving your favorite place',
+              ),
+          );
+        }),
+      );
   }
 
   removeUserPlace(place: Place) {}
